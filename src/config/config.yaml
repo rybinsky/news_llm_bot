@@ -1,0 +1,22 @@
+ollama:
+  model: "llama3.1:8b"
+
+classifier:
+  topics: ["Политика", "Наука", "Спорт", "Технологии", "Культура", "Другое"]
+  temperature: 0.0
+
+scraper:
+  max_articles: 5
+
+news_sources:
+  lenta:
+    url: https://lenta.ru
+    text_field: text
+  # ria:
+  #   url: https://ria.ru
+  #   text_field: meta_description
+
+logging:
+  name: "news_classifier"
+  level: "INFO"
+  file: "logs/news_classifier.log"

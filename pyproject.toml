@@ -1,0 +1,34 @@
+[project]
+name = "bot"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Rybinsky", email = "bar1noff.n@yandex.ru"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<3.13"  # Изменили для совместимости с LangChain
+dependencies = [
+    "langchain-community>=0.3.25,<0.4.0",
+    "langchain-core>=0.3.25,<0.4.0",
+    "langchain-text-splitters>=0.3.8,<0.4.0",
+    "streamlit>=1.45.1,<2.0.0",
+    "python-dotenv>=1.1.0,<2.0.0",
+    "requests>=2.32.4,<3.0.0",
+    "beautifulsoup4>=4.13.4,<5.0.0",
+    "ollama>=0.1.0",  # Добавили явно ollama
+    "pillow>=10.3.0",  # Добавили для работы с изображениями
+    "lxml (>=5.4.0,<6.0.0)",
+    "newspaper3k (>=0.2.8,<0.3.0)",
+    "ipykernel (>=6.29.5,<7.0.0)",
+    "lxml-html-clean (>=0.4.2,<0.5.0)",
+    "langchain-ollama (>=0.3.3,<0.4.0)",
+    "psycopg2 (>=2.9.10,<3.0.0)",
+    "omegaconf (>=2.3.0,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "bot", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
