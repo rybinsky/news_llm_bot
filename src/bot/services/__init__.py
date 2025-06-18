@@ -1,4 +1,4 @@
 from .classifier import NewsClassifier
-from .logging import setup_logging
 from .database import DatabaseManager
+from .logging import setup_logging
 from .scraper import NewsScraper
