@@ -7,7 +7,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.orm import sessionmaker
 
-from models import Base
+from bot.models import Base
 
 from .logging import CustomLogger
 

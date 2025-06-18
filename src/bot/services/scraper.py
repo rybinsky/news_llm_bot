@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 from newspaper import Article
 from newspaper import build as get_last_news
 
-from models import NewsArticle
+from bot.models import NewsArticle
 
 from .classifier import NewsClassifier
 from .database import DBSession
