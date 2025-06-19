@@ -4,7 +4,6 @@ from typing import Any, Optional
 
 from newspaper import Article
 from newspaper import build as get_last_news
-from sentence_transformers import SentenceTransformer
 
 from bot.models import NewsArticle
 
@@ -14,10 +13,8 @@ from .logging import CustomLogger
 
 
 class NewsScraper:
-    def __init__(self, embedding_model: str, logger: Optional[logging.Logger] = None) -> None:
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or CustomLogger(__name__).get_logger()
-        self.embedding_model = SentenceTransformer(embedding_model)
-        self.logger.info("Successfully Sentence Transformer loaded: %s", embedding_model)
 
     def scrape_article(self, url: str) -> Optional[Article]:
         """Scrape article content from given URL."""
@@ -61,7 +58,6 @@ class NewsScraper:
         db_session: DBSession,
         article: Article,
         text_field: str,
-        embedding: list[list[float]] | list[float],
         classifier: Optional[TopicClassifier] = None,
     ) -> bool:
         """Store article in database if it doesn't exist."""
@@ -71,7 +67,6 @@ class NewsScraper:
 
         try:
             parsed_article = self.extract_article_data(article.__dict__, text_field, classifier)
-            parsed_article.update({"embedding": embedding})
             new_article = NewsArticle(**parsed_article)
             db_session.add(new_article)
             db_session.commit()
@@ -97,10 +92,7 @@ class NewsScraper:
             self.logger.info("Parsed last %d news", len(news_source.articles))
             for article in news_source.articles[:max_articles]:
                 scraped_article = self.scrape_article(article.url)
-                embedding = self.embedding_model.encode(scraped_article.text).tolist()
-                if scraped_article and self.store_article(
-                    db_session, scraped_article, text_field, embedding, classifier
-                ):
+                if scraped_article and self.store_article(db_session, scraped_article, text_field, classifier):
                     count += 1
         except Exception as e:
             self.logger.error("Error processing source %s: %s", source_url, str(e))

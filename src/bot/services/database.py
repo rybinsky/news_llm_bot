@@ -36,7 +36,7 @@ class DatabaseManager:
             self.logger.error("Database initialization failed: %s", str(e))
             raise
 
-    def get_last_news_by_topic(self, topic: str, limit: int = 5) -> Sequence[NewsArticle]:
+    def get_last_news_by_topic(self, topic: str, limit: int = 15) -> Sequence[NewsArticle]:
         """Get latest news of given topic."""
         stmt = (
             select(NewsArticle).where(NewsArticle.topic == topic).order_by(desc(NewsArticle.publish_date)).limit(limit)

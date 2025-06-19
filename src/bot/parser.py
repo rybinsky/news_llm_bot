@@ -1,7 +1,7 @@
 import os
 
+import torch
 from dotenv import load_dotenv
-from omegaconf import DictConfig, OmegaConf
 
 from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, NewsScraper, TopicClassifier, load_config, setup_logging
 
@@ -14,7 +14,7 @@ def main():
     logger = setup_logging(config.logging)
 
     db_manager = DatabaseManager(logger)
-    scraper = NewsScraper(config.embedding_model, logger)
+    scraper = NewsScraper(logger)
 
     classifier = TopicClassifier(
         topics=set(config.classifier.topics),
