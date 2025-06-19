@@ -19,9 +19,9 @@ news_sources:
   lenta:
     url: https://lenta.ru
     text_field: text
-  # ria:
-  #   url: https://ria.ru
-  #   text_field: meta_description
+  ria:
+    url: https://ria.ru
+    text_field: meta_description
 
 logging:
   name: "news_classifier"

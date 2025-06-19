@@ -43,9 +43,8 @@ def main() -> None:
             count = scraper.scrape_from_source(
                 source_url=source_cfg.url,
                 text_field=source_cfg.text_field,
-                db_session=db_session,
+                db_session_factory=db_session,
                 classifier=classifier,
-                max_articles=config.scraper.max_articles,
             )
             total_articles += count
             logger.info("Stored %d articles from %s", count, source_name)

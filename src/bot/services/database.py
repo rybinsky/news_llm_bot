@@ -3,7 +3,6 @@ from typing import Optional, Sequence
 
 from sqlalchemy import create_engine, desc, select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.orm import sessionmaker
 
 from bot.models import Base, NewsArticle
@@ -15,7 +14,6 @@ class DatabaseManager:
     def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or CustomLogger(__name__).get_logger()
         self.engine = None
-        self.session = None
 
     def get_database_url(self, config: dict) -> str:
         """Construct database connection URL from configuration."""
@@ -29,7 +27,7 @@ class DatabaseManager:
         try:
             db_url = self.get_database_url(db_config)
             self.engine = create_engine(db_url)
-            self.session = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)()
+            self.session: sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
             Base.metadata.create_all(bind=self.engine)
             self.logger.info("Database initialized successfully")
         except SQLAlchemyError as e:
@@ -41,10 +39,10 @@ class DatabaseManager:
         stmt = (
             select(NewsArticle).where(NewsArticle.topic == topic).order_by(desc(NewsArticle.publish_date)).limit(limit)
         )
-        result = self.session.execute(stmt)
+        result = self.session().execute(stmt)
         return result.scalars().all()
 
-    def get_session(self) -> DBSession:
+    def get_session(self) -> sessionmaker:
         """Get a new database session."""
         if not self.session:
             raise RuntimeError("Database not initialized")

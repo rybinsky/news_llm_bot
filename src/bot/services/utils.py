@@ -1,4 +1,4 @@
-import yaml
+import yaml  # type: ignore[import]
 from omegaconf import DictConfig, OmegaConf
 
 # Example articles for few-shot learning
