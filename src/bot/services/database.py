@@ -1,6 +1,5 @@
 import logging
-import os
-from typing import Optional
+from typing import Optional, Sequence
 
 from sqlalchemy import create_engine, desc, select
 from sqlalchemy.exc import SQLAlchemyError
@@ -13,7 +12,7 @@ from .logging import CustomLogger
 
 
 class DatabaseManager:
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or CustomLogger(__name__).get_logger()
         self.engine = None
         self.session = None
@@ -37,7 +36,7 @@ class DatabaseManager:
             self.logger.error("Database initialization failed: %s", str(e))
             raise
 
-    def get_last_news_by_topic(self, topic: str, limit: int = 5):
+    def get_last_news_by_topic(self, topic: str, limit: int = 5) -> Sequence[NewsArticle]:
         """Get latest news of given topic."""
         stmt = (
             select(NewsArticle).where(NewsArticle.topic == topic).order_by(desc(NewsArticle.publish_date)).limit(limit)

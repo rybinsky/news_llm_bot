@@ -1,6 +1,6 @@
 import os
 import textwrap
-from typing import Dict, List, Optional
+from typing import Dict
 
 import requests
 import streamlit as st
@@ -49,7 +49,7 @@ class NewsAIAgent:
         topic = chain.invoke({"query": user_query}).strip()
         return topic if topic in self.available_topics else "Other"
 
-    def _get_english_news(self, topic: str, num_news: int = 3) -> List[Dict]:
+    def _get_english_news(self, topic: str, num_news: int = 3) -> list[dict]:
         """Получение англоязычных новостей по заданной теме"""
         news_items = []
         try:

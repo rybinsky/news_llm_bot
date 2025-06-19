@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain_core.runnables import RunnableSerializable
@@ -11,13 +11,13 @@ from .logging import CustomLogger
 class TopicClassifier:
     def __init__(
         self,
-        topics: Set[str],
-        example_articles: List[Dict[str, str]],
+        topics: set[str],
+        example_articles: list[dict[str, str]],
         model_name: str,
         temperature: float = 0.0,
         max_attempts: int = 2,
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.topics = topics
         self.example_articles = example_articles
         self.model_name = model_name

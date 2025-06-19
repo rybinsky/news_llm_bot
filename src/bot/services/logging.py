@@ -4,7 +4,7 @@ from typing import Optional
 
 
 class CustomLogger:
-    def __init__(self, name: str, log_level: str = "INFO", log_file: Optional[str] = None):
+    def __init__(self, name: str, log_level: str = "INFO", log_file: Optional[str] = None) -> None:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(log_level)
 

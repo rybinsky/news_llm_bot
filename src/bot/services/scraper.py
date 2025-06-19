@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 from newspaper import Article
 from newspaper import build as get_last_news
@@ -32,8 +32,8 @@ class NewsScraper:
             return None
 
     def extract_article_data(
-        self, article_dict: Dict[str, Any], text_field: str, classifier: Optional[TopicClassifier] = None
-    ) -> Dict[str, Any]:
+        self, article_dict: dict[str, Any], text_field: str, classifier: Optional[TopicClassifier] = None
+    ) -> dict[str, Any]:
         """Extract and process article data from raw dictionary."""
         data = {
             "url": article_dict.get("url"),
@@ -61,7 +61,7 @@ class NewsScraper:
         db_session: DBSession,
         article: Article,
         text_field: str,
-        embedding: list[list[float]],
+        embedding: list[list[float]] | list[float],
         classifier: Optional[TopicClassifier] = None,
     ) -> bool:
         """Store article in database if it doesn't exist."""
@@ -97,8 +97,10 @@ class NewsScraper:
             self.logger.info("Parsed last %d news", len(news_source.articles))
             for article in news_source.articles[:max_articles]:
                 scraped_article = self.scrape_article(article.url)
-                embeddings = self.embedding_model.encode(scraped_article.text).tolist()
-                if scraped_article and self.store_article(db_session, scraped_article, text_field, classifier):
+                embedding = self.embedding_model.encode(scraped_article.text).tolist()
+                if scraped_article and self.store_article(
+                    db_session, scraped_article, text_field, embedding, classifier
+                ):
                     count += 1
         except Exception as e:
             self.logger.error("Error processing source %s: %s", source_url, str(e))
