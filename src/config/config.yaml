@@ -2,8 +2,9 @@ ollama:
   model: "llama3.1:8b"
 
 classifier:
-  topics: ["Политика", "Наука", "Спорт", "Технологии", "Культура", "Другое"]
+  topics: ["Политика", "Наука", "Спорт", "Технологии", "Культура", "Разное"]
   temperature: 0.0
+  max_attempts: 2
 
 scraper:
   max_articles: 5

@@ -1,5 +1,6 @@
 import os
 import textwrap
+from typing import Dict, List, Optional
 
 import requests
 import streamlit as st
@@ -14,166 +15,173 @@ from PIL import Image, ImageDraw, ImageFont
 load_dotenv()
 
 
-# Инициализация Ollama
-def init_llm(model_name="gemma3:1b"):
-    return Ollama(
-        base_url=os.getenv("OLLAMA_BASE_URL"),
-        model=model_name,
-        temperature=0.7,
-    )
+class NewsAIAgent:
+    def __init__(self):
+        self.available_topics = ["technology", "politics", "entertainment"]
+        self.llm_model = "llama3.1:8b"
+        self.llm = self._init_llm()
 
-
-# Получение последних новостей
-def get_news(topics=["technology", "politics", "entertainment"], num_news=5):
-    news_items = []
-    try:
-        for topic in topics:
-            url = f"https://news.google.com/topics/CAAqIQgKIhtDQkFTRGdvSUwyMHZNRFppYm5vU0FuSjFLQUFQAQ?hl=ru&gl=RU&ceid=RU%3Aru"
-            response = requests.get(url)
-            soup = BeautifulSoup(response.content, "lxml-xml")  # Используем lxml для XML
-            items = soup.find_all("item")[:num_news]
-            for item in items:
-                news_items.append(
-                    {"title": item.title.text, "link": item.link.text, "source": item.source.text, "topic": topic}
-                )
-    except Exception as e:
-        st.error(f"Error fetching news: {e}")
-    return news_items
-
-
-# Генерация идеи для мема на основе новости
-def generate_meme_idea(news_item, llm):
-    prompt = ChatPromptTemplate.from_messages(
-        [
-            (
-                "system",
-                """Ты — генератор вирусных мемов на русском языке. У тебя отличное чувство юмора, ты видишь места для него.
-        Я дам тебе новость, а ты на основе новости придумай:
-        1. Острую первую фразу (верх мема)
-        2. Неожиданную вторую фразу (низ мема)
-        3. Короткое объяснение юмора
-
-        Формат ответа:
-        Верх: [фраза 1]
-        Низ: [фраза 2]
-        Соль: [объяснение юмора]""",
-            ),
-            ("user", "Новость: {news_title}\nИсточник: {news_source}\nТема: {news_topic}"),
-        ]
-    )
-
-    chain = prompt | llm | StrOutputParser()
-    result = chain.invoke(
-        {"news_title": news_item["title"], "news_source": news_item["source"], "news_topic": news_item["topic"]}
-    )
-    return result
-
-
-# Создание мема (заглушка - в реальном приложении нужно добавить генерацию изображений)
-def create_meme_image(top_text, bottom_text, format_suggestion):
-    # В реальном приложении здесь будет код для генерации мема
-    # Это примерная реализация с созданием простого изображения
-    width, height = 800, 600
-    img = Image.new("RGB", (width, height), color=(255, 255, 255))
-    d = ImageDraw.Draw(img)
-
-    try:
-        font = ImageFont.truetype("arial.ttf", 40)
-    except:
-        font = ImageFont.load_default()
-
-    # Разбиваем текст на строки
-    top_lines = textwrap.wrap(top_text, width=20)
-    bottom_lines = textwrap.wrap(bottom_text, width=20)
-
-    # Рисуем верхний текст
-    y_text = 10
-    for line in top_lines:
-        w, h = d.textsize(line, font=font)
-        d.text(((width - w) / 2, y_text), line, font=font, fill=(0, 0, 0))
-        y_text += h + 10
-
-    # Рисуем нижний текст
-    y_text = height - 100
-    for line in bottom_lines:
-        w, h = d.textsize(line, font=font)
-        d.text(((width - w) / 2, y_text), line, font=font, fill=(0, 0, 0))
-        y_text += h + 10
-
-    # Добавляем информацию о формате
-    d.text(
-        (10, height - 30), f"Suggested format: {format_suggestion}", font=ImageFont.load_default(), fill=(150, 150, 150)
-    )
-
-    return img
-
-
-# Основное приложение Streamlit
-def main():
-    st.title("🎭 AI-агент для генерации трендовых мемов")
-    st.markdown("Анализируем последние новости и создаем на их основе вирусные мемы")
-
-    # Выбор модели
-    model_name = st.sidebar.selectbox("Выберите модель", ["gemma3:1b"], index=0)
-
-    # Получение новостей
-    if st.sidebar.button("Получить свежие новости"):
-        st.session_state.news = get_news()
-
-    if "news" not in st.session_state:
-        st.session_state.news = []
-
-    if st.session_state.news:
-        st.subheader("Последние новости")
-        news_index = st.selectbox(
-            "Выберите новость для мема",
-            range(len(st.session_state.news)),
-            format_func=lambda x: st.session_state.news[x]["title"],
+    def _init_llm(self, temperature: float = 0.7) -> Ollama:
+        """Инициализация языковой модели"""
+        return Ollama(
+            base_url=os.getenv("OLLAMA_BASE_URL"),
+            model=self.llm_model,
+            temperature=temperature,
         )
-        selected_news = st.session_state.news[news_index]
 
-        if st.button("Сгенерировать мем на основе этой новости"):
-            with st.spinner("Генерируем идею для мема..."):
-                llm = init_llm(model_name)
-                meme_idea = generate_meme_idea(selected_news, llm)
-                st.session_state.meme_idea = meme_idea
+    def _classify_query_topic(self, user_query: str) -> str:
+        """Определение тематики пользовательского запроса (на английском)"""
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    f"""
+             Identify the main topic of the user's query from these options:
+             {', '.join(self.available_topics)}.
+             Return only the topic name without additional explanations.
+             """,
+                ),
+                ("user", "Query: {query}"),
+            ]
+        )
 
-        if "meme_idea" in st.session_state:
-            st.subheader("Идея для мема")
-            st.text(st.session_state.meme_idea)
+        chain = prompt | self.llm | StrOutputParser()
+        topic = chain.invoke({"query": user_query}).strip()
+        return topic if topic in self.available_topics else "Other"
 
-            # Парсинг ответа
-            try:
-                parts = {"Caption": "", "Punchline": "", "Format": "", "Context": ""}
-                current_part = None
+    def _get_english_news(self, topic: str, num_news: int = 3) -> List[Dict]:
+        """Получение англоязычных новостей по заданной теме"""
+        news_items = []
+        try:
+            url = f"https://news.google.com/rss/search?q={topic}&hl=en-US&gl=US&ceid=US:en"
+            response = requests.get(url)
+            soup = BeautifulSoup(response.content, "lxml-xml")
 
-                for line in st.session_state.meme_idea.split("\n"):
-                    if ":" in line:
-                        part_name, content = line.split(":", 1)
-                        part_name = part_name.strip()
-                        if part_name in parts:
-                            current_part = part_name
-                            parts[current_part] = content.strip()
-                        else:
-                            if current_part:
-                                parts[current_part] += "\n" + line
-                    elif current_part:
-                        parts[current_part] += "\n" + line
-                print(parts)
-                # Создание мема
-                if parts["Caption"] and parts["Punchline"]:
-                    with st.spinner("Создаем мем..."):
-                        meme_img = create_meme_image(
-                            parts["Caption"], parts["Punchline"], parts.get("Format", "Unknown format")
-                        )
-                        st.image(meme_img, caption=f"Мем на тему: {selected_news['title']}")
+            for item in soup.find_all("item")[:num_news]:
+                news_items.append(
+                    {
+                        "title": item.title.text,
+                        "link": item.link.text,
+                        "source": item.source.text if item.source else "Unknown source",
+                        "topic": topic,
+                    }
+                )
+        except Exception as e:
+            st.error(f"Ошибка при получении новостей: {e}")
+        return news_items
 
-                        st.markdown("**Почему это смешно:**")
-                        st.write(parts.get("Context", "Объяснение отсутствует"))
-            except Exception as e:
-                st.error(f"Ошибка при создании мема: {e}")
-    else:
-        st.info("Нажмите 'Получить свежие новости' в боковой панели, чтобы начать")
+    def _generate_russian_response(self, news_item: Dict) -> Dict:
+        """Генерация ответа на русском на основе английской новости"""
+        prompt = ChatPromptTemplate.from_messages(
+            [
+                (
+                    "system",
+                    textwrap.dedent(
+                        """
+                Ты — креативный генератор контента для русскоязычной аудитории.
+                На основе английской новости создай на русском языке:
+                1. Мем (верхняя и нижняя фраза)
+                2. Острый комментарий
+                3. Короткий саркастичный вывод
+
+                Формат:
+                Мем: [верхняя фраза] | [нижняя фраза]
+                Комментарий: [текст]
+                Вывод: [текст]
+            """
+                    ),
+                ),
+                ("user", "Английская новость: {title}\nИсточник: {source}"),
+            ]
+        )
+
+        chain = prompt | self.llm | StrOutputParser()
+        result = chain.invoke({"title": news_item["title"], "source": news_item["source"]})
+
+        # Парсинг результата
+        response = {"Мем": "", "Комментарий": "", "Вывод": ""}
+        current_key = None
+
+        for line in result.split("\n"):
+            if ":" in line:
+                key, value = line.split(":", 1)
+                key = key.strip()
+                if key in response:
+                    current_key = key
+                    response[current_key] = value.strip()
+            elif current_key:
+                response[current_key] += " " + line.strip()
+
+        return response
+
+    def process_user_request(self, user_query: str) -> Dict:
+        """Основной метод обработки пользовательского запроса"""
+        # Определяем тему на английском
+        topic = self._classify_query_topic(user_query)
+        st.info(f"Определена тема: {topic}")
+
+        # Получаем англоязычные новости
+        news_items = self._get_english_news(topic)
+        if not news_items:
+            return {"error": "Не удалось найти новости по данной теме"}
+
+        # Выбираем новость
+        selected_news = news_items[0]
+
+        # Генерируем русскоязычный контент
+        content = self._generate_russian_response(selected_news)
+
+        return {
+            "topic": topic,
+            "news": selected_news,
+            "content": content,
+        }
+
+
+def main():
+    st.title("🤖 Англоязычный новостной AI-агент с русскими ответами")
+    st.markdown("Введите запрос на любом языке и получите мем/комментарий на русском на основе англоязычных новостей")
+
+    # Инициализация агента
+    agent = NewsAIAgent()
+
+    # Пользовательский ввод
+    user_query = st.text_input("О чем вы хотите мем/комментарий?", "")
+
+    if user_query:
+        with st.spinner("Анализируем запрос и ищем англоязычные новости..."):
+            result = agent.process_user_request(user_query)
+
+            if "error" in result:
+                st.error(result["error"])
+                return
+
+            # Отображение результатов
+            st.subheader(f"Английская новость по теме '{result['topic']}':")
+            st.markdown(f"**{result['news']['title']}**")
+            st.caption(f"Источник: {result['news']['source']}")
+
+            # Разделение на две колонки
+            col2 = st.columns(1)
+
+            with col2:
+                st.subheader("Анализ на русском")
+                if result["content"]["Комментарий"]:
+                    st.markdown("💬 **Комментарий:**")
+                    st.write(result["content"]["Комментарий"])
+
+                if result["content"]["Вывод"]:
+                    st.markdown("🔍 **Вывод:**")
+                    st.write(result["content"]["Вывод"])
+
+            # Кнопка для генерации нового контента
+            if st.button("Сгенерировать другой вариант"):
+                with st.spinner("Создаем новый вариант..."):
+                    new_content = agent._generate_russian_response(result["news"])
+                    if "|" in new_content["Мем"]:
+                        st.image(agent._create_meme_image(*new_content["Мем"].split("|")[:2]))
+                    st.write("💬 **Новый комментарий:**", new_content["Комментарий"])
+                    st.write("🔍 **Новый вывод:**", new_content["Вывод"])
 
 
 if __name__ == "__main__":

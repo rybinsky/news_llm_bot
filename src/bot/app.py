@@ -1,20 +1,26 @@
 import os
 
+import streamlit as st
 from dotenv import load_dotenv
-from omegaconf import DictConfig, OmegaConf
 
-from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, NewsScraper, TopicClassifier, load_config, setup_logging
+from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, load_config, setup_logging
+
+
+def geenrate_response() -> None:
+    pass
 
 
 def main():
     """Main application entry point."""
     load_dotenv()
+    st.title("🤖 AI-агент: Генератор мемов по последним новостям")
+    st.markdown("Введите запрос на любом языке")
+
     config = load_config()
 
     logger = setup_logging(config.logging)
 
     db_manager = DatabaseManager(logger)
-    scraper = NewsScraper(logger)
 
     classifier = TopicClassifier(
         topics=set(config.classifier.topics),
@@ -36,22 +42,17 @@ def main():
             }
         )
 
-        db_session = db_manager.get_session()
+        user_query = st.text_input("О чем вы хотите мем/комментарий?", "")
 
-        total_articles = 0
-        for source_name, source_cfg in config.news_sources.items():
-            logger.info("Processing news source: %s", source_name)
-            count = scraper.scrape_from_source(
-                source_url=source_cfg.url,
-                text_field=source_cfg.text_field,
-                db_session=db_session,
-                classifier=classifier,
-                max_articles=config.scraper.max_articles,
-            )
-            total_articles += count
-            logger.info("Stored %d articles from %s", count, source_name)
+        if user_query:
+            with st.spinner("Анализируем запрос и ищем похожие новости..."):
+                topic = classifier.classify(user_query)
+                news = db_manager.get_last_news_by_topic(topic)
+                response = geenrate_response()
 
-        logger.info("Finished. Total articles stored: %d", total_articles)
+                st.subheader(f"Читаем новости по теме '{topic}'...")
+                st.markdown("💬 **Мем:**")
+                st.write(response)
 
     except Exception as e:
         logger.error("Application error: %s", str(e), exc_info=True)

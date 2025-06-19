@@ -1,1 +1,1 @@
-from .base import Base, NewsArticle
+from .news_article import Base, NewsArticle

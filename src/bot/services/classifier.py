@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set
 
 from langchain.prompts import FewShotPromptTemplate, PromptTemplate
 from langchain_core.runnables import RunnableSerializable
@@ -8,19 +8,21 @@ from langchain_ollama.llms import OllamaLLM
 from .logging import CustomLogger
 
 
-class NewsClassifier:
+class TopicClassifier:
     def __init__(
         self,
         topics: Set[str],
         example_articles: List[Dict[str, str]],
-        model_name: str = "llama2",
+        model_name: str,
         temperature: float = 0.0,
+        max_attempts: int = 2,
         logger: Optional[logging.Logger] = None,
     ):
         self.topics = topics
         self.example_articles = example_articles
         self.model_name = model_name
         self.temperature = temperature
+        self.max_attempts = max_attempts
         self.logger = logger or CustomLogger(__name__).get_logger()
         self.chain = self._initialize_chain()
 
@@ -43,10 +45,10 @@ class NewsClassifier:
         llm = OllamaLLM(model=self.model_name, temperature=self.temperature)
         return few_shot_prompt | llm
 
-    def classify(self, text: str, max_attempts: int = 3) -> str:
-        """Classify news article text into one of the predefined topics."""
+    def classify(self, text: str) -> str:
+        """Classify text into one of the predefined topics."""
         attempt = 0
-        while attempt < max_attempts:
+        while attempt < self.max_attempts:
             try:
                 answer = self.chain.invoke({"input": text}).strip()
                 if answer in self.topics:
@@ -56,5 +58,5 @@ class NewsClassifier:
                 self.logger.error("Classification attempt %d failed: %s", attempt + 1, str(e))
             attempt += 1
 
-        self.logger.warning("Failed to classify after %d attempts", max_attempts)
-        return "Другое"
+        self.logger.warning("Failed to classify after %d attempts", self.max_attempts)
+        return "Разное"
