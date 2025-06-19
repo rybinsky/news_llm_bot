@@ -14,14 +14,14 @@ def main():
     logger = setup_logging(config.logging)
 
     db_manager = DatabaseManager(logger)
-    scraper = NewsScraper(logger)
+    scraper = NewsScraper(config.embedding_model, logger)
 
     classifier = TopicClassifier(
         topics=set(config.classifier.topics),
         example_articles=EXAMPLES_CLS_TOPIC,
         model_name=config.ollama.model,
         temperature=config.classifier.temperature,
-        max_attempts=config.classifies.max_attempts,
+        max_attempts=config.classifier.max_attempts,
         logger=logger,
     )
 

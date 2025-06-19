@@ -4,17 +4,20 @@ from typing import Any, Dict, Optional
 
 from newspaper import Article
 from newspaper import build as get_last_news
+from sentence_transformers import SentenceTransformer
 
 from bot.models import NewsArticle
 
-from .classifier import NewsClassifier
+from .classifier import TopicClassifier
 from .database import DBSession
 from .logging import CustomLogger
 
 
 class NewsScraper:
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, embedding_model: str, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or CustomLogger(__name__).get_logger()
+        self.embedding_model = SentenceTransformer(embedding_model)
+        self.logger.info("Successfully Sentence Transformer loaded: %s", embedding_model)
 
     def scrape_article(self, url: str) -> Optional[Article]:
         """Scrape article content from given URL."""
@@ -29,7 +32,7 @@ class NewsScraper:
             return None
 
     def extract_article_data(
-        self, article_dict: Dict[str, Any], text_field: str, classifier: Optional[NewsClassifier] = None
+        self, article_dict: Dict[str, Any], text_field: str, classifier: Optional[TopicClassifier] = None
     ) -> Dict[str, Any]:
         """Extract and process article data from raw dictionary."""
         data = {
@@ -54,7 +57,12 @@ class NewsScraper:
         return data
 
     def store_article(
-        self, db_session: DBSession, article: Article, text_field: str, classifier: Optional[NewsClassifier] = None
+        self,
+        db_session: DBSession,
+        article: Article,
+        text_field: str,
+        embedding: list[list[float]],
+        classifier: Optional[TopicClassifier] = None,
     ) -> bool:
         """Store article in database if it doesn't exist."""
         if db_session.query(NewsArticle).filter(NewsArticle.url == article.url).first():
@@ -63,6 +71,7 @@ class NewsScraper:
 
         try:
             parsed_article = self.extract_article_data(article.__dict__, text_field, classifier)
+            parsed_article.update({"embedding": embedding})
             new_article = NewsArticle(**parsed_article)
             db_session.add(new_article)
             db_session.commit()
@@ -78,7 +87,7 @@ class NewsScraper:
         source_url: str,
         text_field: str,
         db_session: DBSession,
-        classifier: Optional[NewsClassifier] = None,
+        classifier: Optional[TopicClassifier] = None,
         max_articles: int = 5,
     ) -> int:
         """Scrape articles from a single source and store them."""
@@ -88,6 +97,7 @@ class NewsScraper:
             self.logger.info("Parsed last %d news", len(news_source.articles))
             for article in news_source.articles[:max_articles]:
                 scraped_article = self.scrape_article(article.url)
+                embeddings = self.embedding_model.encode(scraped_article.text).tolist()
                 if scraped_article and self.store_article(db_session, scraped_article, text_field, classifier):
                     count += 1
         except Exception as e:

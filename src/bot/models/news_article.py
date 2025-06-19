@@ -1,5 +1,6 @@
 from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -18,6 +19,7 @@ class NewsArticle(Base):
     keywords = Column(PG_ARRAY(String(50)))
     summary = Column(Text)
     language = Column(String(10))
+    embedding = Column(JSONB)
 
     def __repr__(self):
         return f"<NewsArticle(title='{self.title}', source='{self.source}')>"

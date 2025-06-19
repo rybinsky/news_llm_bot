@@ -2,6 +2,7 @@ import os
 
 import streamlit as st
 from dotenv import load_dotenv
+from langchain_ollama.llms import OllamaLLM
 
 from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, load_config, setup_logging
 
@@ -30,6 +31,8 @@ def main():
         max_attempts=config.classifies.max_attempts,
         logger=logger,
     )
+
+    llm = OllamaLLM(model=config.generator.model, temperature=config.generator.temperature)
 
     try:
         db_manager.initialize(
