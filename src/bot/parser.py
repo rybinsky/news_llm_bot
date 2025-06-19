@@ -1,12 +1,11 @@
 import os
 
-import torch
 from dotenv import load_dotenv
 
 from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, NewsScraper, TopicClassifier, load_config, setup_logging
 
 
-def main():
+def main() -> None:
     """Main application entry point."""
     load_dotenv()
     config = load_config()
