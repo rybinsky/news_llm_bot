@@ -5,6 +5,8 @@ from typing import Sequence
 import streamlit as st
 import torch
 from dotenv import load_dotenv
+from langchain.chains.combine_documents.base import BaseCombineDocumentsChain
+from langchain.chains.summarize import load_summarize_chain
 from langchain.schema import StrOutputParser
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_community.vectorstores import FAISS
@@ -41,14 +43,41 @@ def format_docs(docs: list[Document]) -> str:
     return "\n\n".join([d.page_content for d in docs])
 
 
+def summarize_news(docs: list[Document], chain: BaseCombineDocumentsChain) -> list[str]:
+    """Суммаризация новостей с помощью LLM."""
+    summaries = []
+    for doc in docs:
+        summary = chain.invoke([doc])
+        summaries.append(f"📌 {summary['output_text']}")
+    return summaries
+
+
 def generate_response(
-    llm: OllamaLLM, news: Sequence[NewsArticle], embedder: HFEmbedder, splitter: CharacterTextSplitter, query: str
-) -> str:
+    llm: OllamaLLM,
+    news: Sequence[NewsArticle],
+    embedder: HFEmbedder,
+    summarize_chain: BaseCombineDocumentsChain,
+    splitter: CharacterTextSplitter,
+    query: str,
+) -> tuple[str, list[str]]:
+    """Генерация ответа с возвратом шутки и суммаризированных новостей."""
     split_documents = splitter.create_documents([new.text for new in news])
     db = FAISS.from_documents(split_documents, embedder)
     retriever = db.as_retriever()
-    chain = {"context": retriever | format_docs, "question": RunnablePassthrough()} | PROMPT | llm | StrOutputParser()
-    return chain.invoke(query)
+
+    relevant_docs = retriever.invoke(query)
+    news_summaries = summarize_news(relevant_docs, summarize_chain)
+
+    chain = (
+        {"context": lambda x: format_docs(relevant_docs), "question": RunnablePassthrough()}
+        | PROMPT
+        | llm
+        | StrOutputParser()
+    )
+
+    joke = chain.invoke(query)
+
+    return joke, news_summaries
 
 
 def main():
@@ -58,7 +87,6 @@ def main():
     st.markdown("Введите запрос на любом языке")
 
     config = load_config()
-
     logger = setup_logging(config.logging)
 
     text_embedder = HFEmbedder(
@@ -85,6 +113,7 @@ def main():
     )
 
     llm = OllamaLLM(model=config.generator.model, temperature=config.generator.temperature)
+    summarize_chain = load_summarize_chain(llm, chain_type="map_reduce", verbose=False)
 
     try:
         db_manager.initialize(
@@ -103,14 +132,20 @@ def main():
             with st.spinner("Анализируем запрос и ищем похожие новости..."):
                 topic = classifier.classify(user_query)
                 news = db_manager.get_last_news_by_topic(topic)
-                response = generate_response(llm, news, text_embedder, splitter, user_query)
+                joke, news_summaries = generate_response(
+                    llm, news, text_embedder, summarize_chain, splitter, user_query
+                )
 
-                st.subheader(f"Читаем новости по теме '{topic}'...")
-                st.markdown("💬 **Мем:**")
-                st.write(response)
+                st.subheader(f"📰 Новости по теме '{topic}':")
+                for summary in news_summaries:
+                    st.write(summary)
+
+                st.markdown("\n💬 **Мем:**")
+                st.success(joke)
 
     except Exception as e:
         logger.error("Application error: %s", str(e), exc_info=True)
+        st.error("Произошла ошибка при обработке запроса")
 
     finally:
         db_manager.close()
