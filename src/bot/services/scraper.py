@@ -111,15 +111,14 @@ class NewsScraper:
             self.logger.info("Parsed last %d news", len(news_source.articles))
             article_urls = [article.url for article in news_source.articles]
 
-            with ThreadPoolExecutor(max_workers=1) as executor:
+            with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
                 futures = [
                     executor.submit(self.process_single_article, url, text_field, db_session_factory, classifier)
                     for url in article_urls
                 ]
 
-                # Обрабатываем результаты по мере завершения
                 for future in as_completed(futures):
-                    if future.result():  # Если статья успешно сохранена
+                    if future.result():
                         count += 1
 
         except Exception as e:
