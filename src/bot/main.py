@@ -9,7 +9,7 @@ from langchain_huggingface import HuggingFaceEmbeddings as HFEmbedder
 from langchain_ollama.llms import OllamaLLM
 
 from bot.app import generate_response, run_news_updater
-from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, load_config, setup_logging
+from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, get_db_config, load_config, setup_logging
 
 torch.classes.__path__ = []
 
@@ -62,15 +62,7 @@ def main() -> None:
     )
 
     try:
-        db_manager.initialize(
-            {
-                "user": st.secrets["POSTGRES_USER"],
-                "password": st.secrets["POSTGRES_PASS"],
-                "host": st.secrets["POSTGRES_HOST"],
-                "port": st.secrets["POSTGRES_PORT"],
-                "database": st.secrets["POSTGRES_DB"],
-            }
-        )
+        db_manager.initialize(get_db_config())
 
         user_query = st.text_input("О чем вы хотите мем/комментарий?", "")
 

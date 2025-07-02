@@ -1,10 +1,17 @@
 import threading
 import time
 
-import streamlit as st
 from dotenv import load_dotenv
 
-from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, NewsScraper, TopicClassifier, load_config, setup_logging
+from bot.services import (
+    EXAMPLES_CLS_TOPIC,
+    DatabaseManager,
+    NewsScraper,
+    TopicClassifier,
+    get_db_config,
+    load_config,
+    setup_logging,
+)
 
 
 def run_news_updater() -> None:
@@ -14,13 +21,7 @@ def run_news_updater() -> None:
 
     db_manager = DatabaseManager(logger)
     db_manager.initialize(
-        {
-            "user": st.secrets["POSTGRES_USER"],
-            "password": st.secrets["POSTGRES_PASS"],
-            "host": st.secrets["POSTGRES_HOST"],
-            "port": st.secrets["POSTGRES_PORT"],
-            "database": st.secrets["POSTGRES_DB"],
-        },
+        get_db_config(),
         clear_tables=True,
     )
     scraper = NewsScraper(logger)
