@@ -14,12 +14,24 @@ from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, l
 torch.classes.__path__ = []
 
 
-# Запускаем фоновый парсинг
-run_news_updater()
+FIRST_RUN_FLAG = ".first_run"
+
+
+def check_first_run() -> bool:
+    """Проверяет, первый ли это запуск приложения"""
+    if not os.path.exists(FIRST_RUN_FLAG):
+        with open(FIRST_RUN_FLAG, "w") as f:
+            f.write("1")
+        return True
+    return False
 
 
 def main() -> None:
     load_dotenv()
+
+    if check_first_run():
+        run_news_updater()
+
     st.title("🤖 AI-агент: Генератор мемов по последним новостям")
 
     config = load_config()

@@ -22,7 +22,7 @@ class DatabaseManager:
             f"{config['host']}:{config['port']}/{config['database']}"
         )
 
-    def initialize(self, db_config: dict, clear_tables: bool = True) -> None:
+    def initialize(self, db_config: dict, clear_tables: bool = False) -> None:
         """Initialize database connection."""
         try:
             db_url = self.get_database_url(db_config)

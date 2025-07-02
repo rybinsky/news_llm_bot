@@ -13,6 +13,16 @@ def run_news_updater() -> None:
     logger = setup_logging(config.logging)
 
     db_manager = DatabaseManager(logger)
+    db_manager.initialize(
+        {
+            "user": os.getenv("POSTGRES_USER"),
+            "password": os.getenv("POSTGRES_PASS"),
+            "host": os.getenv("POSTGRES_HOST"),
+            "port": os.getenv("POSTGRES_PORT"),
+            "database": os.getenv("POSTGRES_DB"),
+        },
+        clear_tables=True,
+    )
     scraper = NewsScraper(logger)
 
     classifier = TopicClassifier(
@@ -27,16 +37,6 @@ def run_news_updater() -> None:
     def update_loop() -> None:
         while True:
             try:
-                db_manager.initialize(
-                    {
-                        "user": os.getenv("POSTGRES_USER"),
-                        "password": os.getenv("POSTGRES_PASS"),
-                        "host": os.getenv("POSTGRES_HOST"),
-                        "port": os.getenv("POSTGRES_PORT"),
-                        "database": os.getenv("POSTGRES_DB"),
-                    }
-                )
-
                 db_session = db_manager.get_session()
 
                 for source_name, source_cfg in config.news_sources.items():
