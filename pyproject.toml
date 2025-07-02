@@ -6,7 +6,7 @@ authors = [
     {name = "Rybinsky", email = "bar1noff.n@yandex.ru"}
 ]
 readme = "README.md"
-requires-python = ">=3.10,<3.13"  # Изменили для совместимости с LangChain
+requires-python = ">=3.10,<3.14"  # Изменили для совместимости с LangChain
 dependencies = [
     "langchain-community>=0.3.25,<0.4.0",
     "langchain-core>=0.3.25,<0.4.0",

@@ -1512,7 +1512,10 @@ httpx-sse = ">=0.4.0,<1.0.0"
 langchain = ">=0.3.25,<1.0.0"
 langchain-core = ">=0.3.65,<1.0.0"
 langsmith = ">=0.1.125,<0.4"
-numpy = {version = ">=1.26.2", markers = "python_version < \"3.13\""}
+numpy = [
+    {version = ">=1.26.2", markers = "python_version < \"3.13\""},
+    {version = ">=2.1.0", markers = "python_version >= \"3.13\""},
+]
 pydantic-settings = ">=2.4.0,<3.0.0"
 PyYAML = ">=5.3"
 requests = ">=2,<3"
@@ -4084,7 +4087,7 @@ description = "Easily download, build, install, upgrade, and uninstall Python pa
 optional = false
 python-versions = ">=3.9"
 groups = ["main"]
-markers = "platform_system == \"Linux\" and platform_machine == \"x86_64\" or python_version == \"3.12\""
+markers = "platform_system == \"Linux\" and platform_machine == \"x86_64\" or python_version >= \"3.12\""
 files = [
     {file = "setuptools-80.9.0-py3-none-any.whl", hash = "sha256:062d34222ad13e0cc312a4c02d73f059e86a4acbfbdea8f8f76b28c99f306922"},
     {file = "setuptools-80.9.0.tar.gz", hash = "sha256:f36b47402ecde768dbfafc46e8e4207b4360c654f1f3bb84475f0a28628fb19c"},
@@ -5015,5 +5018,5 @@ cffi = ["cffi (>=1.11)"]
 
 [metadata]
 lock-version = "2.1"
-python-versions = ">=3.10,<3.13"
-content-hash = "f255194d44cad63c3a5952644bc29068e9ca7040a7f3c1ee1cf68b36368d7f12"
+python-versions = ">=3.10,<3.14"
+content-hash = "f56ba0f8b9ed82d6e0ec000bc8f85411333665d6901d7f3394b2dbca7707d176"
