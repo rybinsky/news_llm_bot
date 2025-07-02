@@ -13,6 +13,7 @@ from bot.services import EXAMPLES_CLS_TOPIC, DatabaseManager, TopicClassifier, l
 
 torch.classes.__path__ = []
 
+os.environ["STREAMLIT_SERVER_FILE_WATCHER"] = "none"
 
 FIRST_RUN_FLAG = ".first_run"
 
