@@ -86,7 +86,7 @@ def main() -> None:
     """Main application entry point."""
     load_dotenv()
     st.title("🤖 AI-агент: Генератор мемов по последним новостям")
-    st.markdown("Введите запрос на любом языке")
+    st.markdown("Введите запрос")
 
     config = load_config()
     logger = setup_logging(config.logging)
