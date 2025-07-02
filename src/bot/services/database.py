@@ -22,12 +22,15 @@ class DatabaseManager:
             f"{config['host']}:{config['port']}/{config['database']}"
         )
 
-    def initialize(self, db_config: dict) -> None:
+    def initialize(self, db_config: dict, clear_tables: bool = True) -> None:
         """Initialize database connection."""
         try:
             db_url = self.get_database_url(db_config)
             self.engine = create_engine(db_url)
             self.session: sessionmaker = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
+            if clear_tables:
+                Base.metadata.drop_all(bind=self.engine)
+                self.logger.info("All tables dropped")
             Base.metadata.create_all(bind=self.engine)
             self.logger.info("Database initialized successfully")
         except SQLAlchemyError as e:
