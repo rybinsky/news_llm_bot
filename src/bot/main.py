@@ -63,11 +63,11 @@ def main() -> None:
     try:
         db_manager.initialize(
             {
-                "user": os.getenv("POSTGRES_USER"),
-                "password": os.getenv("POSTGRES_PASS"),
-                "host": os.getenv("POSTGRES_HOST"),
-                "port": os.getenv("POSTGRES_PORT"),
-                "database": os.getenv("POSTGRES_DB"),
+                "user": st.secrets["POSTGRES_USER"],
+                "password": st.secrets["POSTGRES_PASS"],
+                "host": st.secrets["POSTGRES_HOST"],
+                "port": st.secrets["POSTGRES_PORT"],
+                "database": st.secrets["POSTGRES_DB"],
             }
         )
 
