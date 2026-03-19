@@ -147,4 +147,3 @@ poetry run pytest
 ## Авторы
 
 Rybinsky (barinov.na@phystech.edu)
-```
