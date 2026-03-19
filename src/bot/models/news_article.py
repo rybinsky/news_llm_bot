@@ -1,8 +1,8 @@
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from sqlalchemy import Any, Column, DateTime, Integer, String, Text
 from sqlalchemy.dialects.postgresql import ARRAY as PG_ARRAY
 from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+Base: Any = declarative_base()
 
 
 class NewsArticle(Base):
@@ -19,5 +19,5 @@ class NewsArticle(Base):
     summary = Column(Text)
     language = Column(String(10))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"<NewsArticle(title='{self.title}', source='{self.source}')>"
