@@ -146,7 +146,5 @@ poetry run pytest
 
 ## Авторы
 
-Rybinsky (bar1noff.n@yandex.ru)
+Rybinsky (barinov.na@phystech.edu)
 ```
-
-Можете просто скопировать этот текст и вставить в README.md файл.
